@@ -17,5 +17,15 @@ module LoadBalancer
                 raise
             end
         end
+
+        def next_db
+            raise NotImplementedError, ""
+        end
+
+        def connected_to_next_db
+            ::ActiveRecord::Base.connected_to(**next_db) do
+                yield
+            end
+        end
     end
 end

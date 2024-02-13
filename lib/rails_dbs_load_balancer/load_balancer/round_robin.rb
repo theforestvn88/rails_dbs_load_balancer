@@ -3,8 +3,9 @@ require_relative "./algo"
 
 module LoadBalancer
     class RoundRobin < Algo
-        # 
-        def next
+        cattr_accessor :current
+        
+        def next_db
             @database_configs[cas_current]
         end
         
@@ -32,7 +33,7 @@ module LoadBalancer
             rescue
                 # in case of redis failed
                 # round-robin local server current
-                @current = ((@current || 0) + 1) % @database_configs.size
+                @@current = ((@@current || 0) + 1) % @database_configs.size
             end
     end
 end
