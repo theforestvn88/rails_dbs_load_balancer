@@ -28,7 +28,11 @@ module LoadBalancer
             end
 
             def cas_current
-                eval_lua_script(CAS_NEXT_SCRIPT, CAS_NEXT_SCRIPT_SHA1, [current_cached_key], [@database_configs.size])
+                @current = eval_lua_script(CAS_NEXT_SCRIPT, CAS_NEXT_SCRIPT_SHA1, [current_cached_key], [@database_configs.size])
+            rescue
+                # in case of redis failed
+                # round-robin local server current
+                @current = ((@current || 0) + 1) % @database_configs.size
             end
     end
 end
