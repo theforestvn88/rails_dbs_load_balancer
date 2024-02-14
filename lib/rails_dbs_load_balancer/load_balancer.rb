@@ -3,6 +3,7 @@ require 'digest'
 require_relative "./redis_lua"
 require_relative "./distribute_lock"
 require_relative "./load_balancer/round_robin"
+require_relative "./load_balancer/least_connection"
 
 module LoadBalancer
     extend ::ActiveSupport::Concern

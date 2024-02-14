@@ -31,6 +31,7 @@ class TestRecord < ActiveRecord::Base
   }
 
   include LoadBalancer
+
   load_balancing :test, [
       {role: :reading1}, 
       {role: :reading2},
@@ -39,5 +40,16 @@ class TestRecord < ActiveRecord::Base
       {role: :reading5},
       {role: :reading6},
     ],
+    redis: Redis.new(host: 'localhost')
+
+  load_balancing :lc, [
+      {role: :reading1}, 
+      {role: :reading2},
+      {role: :reading3},
+      {role: :reading4},
+      {role: :reading5},
+      {role: :reading6},
+    ],
+    algorithm: :least_connection,
     redis: Redis.new(host: 'localhost')
 end
