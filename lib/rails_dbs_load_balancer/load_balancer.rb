@@ -1,6 +1,8 @@
 require "active_support"
+require 'digest'
+require_relative "./redis_lua"
+require_relative "./distribute_lock"
 require_relative "./load_balancer/round_robin"
-require_relative "./load_balancer/least_connection"
 
 module LoadBalancer
     extend ::ActiveSupport::Concern
@@ -16,6 +18,11 @@ module LoadBalancer
                 redis: redis,
                 key: name
             }
+
+            DistributeLock.new(redis).synchronize(name) do
+                lb = lb_algo_clazz.new(db_configs, redis: redis, key: name)
+                lb.warm_up
+            end
         end
 
         def connected_through_load_balancer(name, &blk)

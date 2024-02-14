@@ -1,4 +1,3 @@
-require 'digest'
 require_relative "./algo"
 
 module LoadBalancer
