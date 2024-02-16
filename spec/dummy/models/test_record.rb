@@ -32,7 +32,7 @@ class TestRecord < ActiveRecord::Base
 
   include LoadBalancer
 
-  load_balancing :test, [
+  load_balancing :rr, [
       {role: :reading1}, 
       {role: :reading2},
       {role: :reading3},
@@ -52,4 +52,15 @@ class TestRecord < ActiveRecord::Base
     ],
     algorithm: :least_connection,
     redis: Redis.new(host: 'localhost')
+
+  load_balancing :lc_local, [
+      {role: :reading1}, 
+      {role: :reading2},
+      {role: :reading3},
+      {role: :reading4},
+      {role: :reading5},
+      {role: :reading6},
+    ],
+    algorithm: :least_connection
+ 
 end

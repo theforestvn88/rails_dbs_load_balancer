@@ -2,7 +2,7 @@
 require_relative "./dummy/models/developer"
 
 RSpec.describe "round robin algorithm" do
-    it "should fair distribute to all reading databases" do
+    it "should fair distribute to all databases" do
         counter = Hash.new(0)
         allow(ActiveRecord::Base).to receive(:connected_to) do |role:, **configs|
             counter[role] += 1
@@ -11,7 +11,7 @@ RSpec.describe "round robin algorithm" do
         threads = []
         36.times do |i|
             threads << Thread.new do
-                Developer.connected_through_load_balancer(:test) do
+                Developer.connected_through_load_balancer(:rr) do
                     Developer.all
                 end
             end
@@ -40,7 +40,7 @@ RSpec.describe "round robin algorithm" do
             threads = []
             36.times do |i|
                 threads << Thread.new do
-                    Developer.connected_through_load_balancer(:test) do
+                    Developer.connected_through_load_balancer(:rr) do
                         Developer.all
                     end
                 end

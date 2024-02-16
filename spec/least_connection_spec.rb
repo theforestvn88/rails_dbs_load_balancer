@@ -41,6 +41,32 @@ RSpec.describe "least-connection algorithm" do
         expect(least_role).to eq(:reading3)
     end
 
-    # context "redis failed" do
-    # end
+    context "redis nil or redis failed" do
+        it "should calculate least connection on each server" do
+            pq = LoadBalancer::LeastConnection.leasts["lc_local:pq"] 
+            pq.pop until pq.empty?
+            pq.push([0, 5])
+            pq.push([1, 5])
+            pq.push([2, 3])
+            pq.push([3, 4])
+            pq.push([4, 5])
+            pq.push([5, 6])
+
+            least_role = nil
+            allow(ActiveRecord::Base).to receive(:connected_to) do |role:, **configs|
+                least_role = role
+            end.and_yield
+
+            Developer.connected_through_load_balancer(:lc_local) do
+                Developer.all
+            end
+
+            expect(least_role).to eq(:reading3)
+
+            Developer.connected_through_load_balancer(:lc_local) do
+                Developer.all
+            end
+            expect(least_role).to eq(:reading4)
+        end
+    end
 end

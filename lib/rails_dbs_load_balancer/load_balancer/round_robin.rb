@@ -2,7 +2,7 @@ require_relative "./algo"
 
 module LoadBalancer
     class RoundRobin < Algo
-        cattr_accessor :current
+        cattr_accessor :currents
         
         def next_db
             @database_configs[cas_current]
@@ -28,11 +28,17 @@ module LoadBalancer
             end
 
             def cas_current
+                return local_current if @redis.nil?
                 @current = eval_lua_script(CAS_NEXT_SCRIPT, CAS_NEXT_SCRIPT_SHA1, [current_cached_key], [@database_configs.size])
             rescue
                 # in case of redis failed
                 # round-robin local server current
-                @@current = ((@@current || 0) + 1) % @database_configs.size
+                local_current
+            end
+
+            def local_current
+                @@currents ||= Hash.new(0)
+                @@currents[current_cached_key] = ((@@currents[current_cached_key] || 0) + 1) % @database_configs.size
             end
     end
 end

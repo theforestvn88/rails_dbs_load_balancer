@@ -16,6 +16,8 @@ class DistributeLock
         ensure
             eval_lua_script(UNLOCK_SCRIPT, UNLOCK_SCRIPT_SHA1, [name], [time_lock.to_s])
         end
+    rescue
+        yield
     end
 
     private

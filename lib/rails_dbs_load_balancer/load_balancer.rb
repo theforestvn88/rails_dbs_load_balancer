@@ -4,6 +4,7 @@ require_relative "./redis_lua"
 require_relative "./distribute_lock"
 require_relative "./load_balancer/round_robin"
 require_relative "./load_balancer/least_connection"
+require_relative "./load_balancer/weight_round_robin"
 
 module LoadBalancer
     extend ::ActiveSupport::Concern
@@ -11,7 +12,7 @@ module LoadBalancer
     mattr_reader :lb, default: {}
 
     module ClassMethods
-        def load_balancing(name, db_configs, algorithm: :round_robin, redis:)
+        def load_balancing(name, db_configs, algorithm: :round_robin, redis: nil)
             lb_algo_clazz = "LoadBalancer::#{algorithm.to_s.classify}".constantize
             LoadBalancer.lb[name] = {
                 clazz: lb_algo_clazz,
