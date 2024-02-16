@@ -62,5 +62,15 @@ class TestRecord < ActiveRecord::Base
       {role: :reading6},
     ],
     algorithm: :least_connection
- 
+
+
+  load_balancing :wrr, [
+      {role: :reading1, weight: 6}, 
+      {role: :reading2, weight: 5},
+      {role: :reading3, weight: 4},
+      {role: :reading4, weight: 3},
+      {role: :reading5, weight: 2},
+      {role: :reading6, weight: 1},
+    ],
+    algorithm: :weight_round_robin
 end
