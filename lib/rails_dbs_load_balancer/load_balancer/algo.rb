@@ -12,12 +12,12 @@ module LoadBalancer
         def warm_up
         end
 
-        def next_db
+        def next_db(**options)
             raise NotImplementedError, ""
         end
 
-        def connected_to_next_db
-            ::ActiveRecord::Base.connected_to(**next_db) do
+        def connected_to_next_db(**options)
+            ::ActiveRecord::Base.connected_to(**next_db(**options)) do
                 yield
             end
         end

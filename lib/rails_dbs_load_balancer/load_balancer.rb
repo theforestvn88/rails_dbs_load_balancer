@@ -5,6 +5,7 @@ require_relative "./distribute_lock"
 require_relative "./load_balancer/round_robin"
 require_relative "./load_balancer/least_connection"
 require_relative "./load_balancer/weight_round_robin"
+require_relative "./load_balancer/ip_hash"
 
 module LoadBalancer
     extend ::ActiveSupport::Concern
@@ -27,12 +28,12 @@ module LoadBalancer
             end
         end
 
-        def connected_through_load_balancer(name, &blk)
+        def connected_through_load_balancer(name, **options, &blk)
             raise ArgumentError, "not found #{name} load balancer" unless LoadBalancer.lb.has_key?(name)
             
             configs = LoadBalancer.lb[name]
             lb = configs[:clazz].new(configs[:db_configs], redis: configs[:redis], key: configs[:key])
-            lb.connected_to_next_db(&blk)
+            lb.connected_to_next_db(**options, &blk)
         end
     end
 end

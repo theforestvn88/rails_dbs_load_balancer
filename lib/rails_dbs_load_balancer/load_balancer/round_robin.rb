@@ -4,7 +4,7 @@ module LoadBalancer
     class RoundRobin < Algo
         cattr_accessor :currents
         
-        def next_db
+        def next_db(**options)
             @database_configs[cas_current]
         end
         

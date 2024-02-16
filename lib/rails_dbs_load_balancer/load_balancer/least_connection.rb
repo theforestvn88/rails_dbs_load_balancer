@@ -26,11 +26,11 @@ module LoadBalancer
             end
         end
 
-        def next_db
+        def next_db(**options)
             @database_configs[least.to_i]
         end
 
-        def connected_to_next_db
+        def connected_to_next_db(**options)
             super
             decrease
         end

@@ -18,7 +18,7 @@ module LoadBalancer
             end
         end
 
-        def next_db
+        def next_db(**options)
             @database_configs[pick_weight]
         end
 
