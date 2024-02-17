@@ -5,7 +5,7 @@ require_relative "./distribute_lock"
 require_relative "./load_balancer/round_robin"
 require_relative "./load_balancer/least_connection"
 require_relative "./load_balancer/weight_round_robin"
-require_relative "./load_balancer/ip_hash"
+require_relative "./load_balancer/hash"
 require_relative "./load_balancer/randomized"
 
 module LoadBalancer

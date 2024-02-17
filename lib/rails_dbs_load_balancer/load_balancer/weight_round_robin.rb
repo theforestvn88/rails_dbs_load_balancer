@@ -4,7 +4,7 @@ module LoadBalancer
     class WeightRoundRobin < Algo
         cattr_reader :mutexes, default: {}
         cattr_reader :cum_weights, default: {}
-        cattr_reader :weight_sums, default: Hash.new(0)
+        cattr_reader :weight_sums, default: ::Hash.new(0)
 
         def warm_up
             (@@mutexes[weights_key] ||= Mutex.new).synchronize do

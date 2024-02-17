@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 require_relative "./dummy/models/developer"
 
-RSpec.describe "ip-hash algorithm" do
+RSpec.describe "hash algorithm" do
     describe "Not dependent on redis" do
         it "distribute base on ip hash" do
             db = nil
@@ -10,11 +10,16 @@ RSpec.describe "ip-hash algorithm" do
             end.and_yield
 
             ip = "197.168.1.1"
-            allow_any_instance_of(LoadBalancer::IpHash).to receive(:hashcode).with(ip).and_return(1)
-            Developer.connected_through_load_balancer(:ip_hash, ip: ip) do
+            Developer.connected_through_load_balancer(:hash, source: ip) do
                 Developer.all
             end
             expect(db).to eq(:reading2)
+
+            url = "thisisaaaaaalongongongogngonggongognogngongogngongongongogngongongognognogngongongogngoogosngksdfkshdfshdfkshdfkjshdfjkhsdfkjdhsfkjdfshkj/api/books/156"
+            Developer.connected_through_load_balancer(:hash, source: url) do
+                Developer.all
+            end
+            expect(db).to eq(:reading3)
         end
     end
 end

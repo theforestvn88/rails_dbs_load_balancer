@@ -74,7 +74,7 @@ class TestRecord < ActiveRecord::Base
     ],
     algorithm: :weight_round_robin
 
-  load_balancing :ip_hash, [
+  load_balancing :hash, [
       {role: :reading1}, 
       {role: :reading2},
       {role: :reading3},
@@ -82,7 +82,7 @@ class TestRecord < ActiveRecord::Base
       {role: :reading5},
       {role: :reading6},
     ],
-    algorithm: :ip_hash
+    algorithm: :hash
 
   load_balancing :randomized, [
       {role: :reading1}, 

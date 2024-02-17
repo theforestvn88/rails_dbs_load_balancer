@@ -37,7 +37,7 @@ module LoadBalancer
             end
 
             def local_current
-                @@currents ||= Hash.new(0)
+                @@currents ||= ::Hash.new(0)
                 @@currents[current_cached_key] = ((@@currents[current_cached_key] || 0) + 1) % @database_configs.size
             end
     end
