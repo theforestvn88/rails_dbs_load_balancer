@@ -1,20 +1,19 @@
 # frozen_string_literal: true
 require_relative "./dummy/models/developer"
 
-RSpec.describe "ip-hash algorithm" do
+RSpec.describe "randomized algorithm" do
     describe "Not dependent on redis" do
-        it "distribute base on ip hash" do
+        it "randomized distribute" do
             db = nil
             allow(ActiveRecord::Base).to receive(:connected_to) do |role:, **configs|
                 db = role
             end.and_yield
 
-            ip = "197.168.1.1"
-            allow_any_instance_of(LoadBalancer::IpHash).to receive(:hashcode).with(ip).and_return(1)
-            Developer.connected_through_load_balancer(:ip_hash, ip: ip) do
+            allow_any_instance_of(Object).to receive(:rand).and_return(2)
+            Developer.connected_through_load_balancer(:randomized) do
                 Developer.all
             end
-            expect(db).to eq(:reading2)
+            expect(db).to eq(:reading3)
         end
     end
 end

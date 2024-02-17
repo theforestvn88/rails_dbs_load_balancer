@@ -83,4 +83,14 @@ class TestRecord < ActiveRecord::Base
       {role: :reading6},
     ],
     algorithm: :ip_hash
+
+  load_balancing :randomized, [
+      {role: :reading1}, 
+      {role: :reading2},
+      {role: :reading3},
+      {role: :reading4},
+      {role: :reading5},
+      {role: :reading6},
+    ],
+    algorithm: :randomized
 end
