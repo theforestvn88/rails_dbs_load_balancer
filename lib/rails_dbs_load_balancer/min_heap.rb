@@ -19,13 +19,14 @@ class MinHeap
     end
 
     def update(index, delta)
-        item_index = @items.find_index { |item| item.first == index }
-        @items[item_index][1] += delta
-        
-        if delta > 0
-            swim_up(item_index)
-        else
-            sink_down(item_index)
+        if item_index = @items.find_index { |item| item.first == index }
+            @items[item_index][1] += delta
+            
+            if delta < 0
+                swim_up(item_index)
+            else
+                sink_down(item_index)
+            end
         end
     end
 

@@ -6,7 +6,7 @@ module LoadBalancer
         cattr_reader :leasts, default: {}
 
         def warm_up
-            (@@mutexes[db_conns_pq_key] ||= Mutex.new).synchronize do
+            pq_mutex.synchronize do
                 begin
                     unless @redis.exists?(db_conns_pq_key)
                         @database_configs.size.times do |i|
@@ -48,24 +48,34 @@ module LoadBalancer
                 "#{@key}:pq"
             end
 
-            def least
-                return local_least if @redis.nil?
-                @least ||= eval_lua_script(CAS_TOP_SCRIPT, CAS_TOP_SCRIPT_SHA1, [db_conns_pq_key], [])
-            rescue
-                local_least
+            def pq_mutex
+                @@mutexes[db_conns_pq_key] ||= Mutex.new
             end
 
-            def local_least
-                x, count = @@leasts[db_conns_pq_key].pop
-                @@leasts[db_conns_pq_key].push([x, count + 1])
-                x
+            def least
+                @least ||= eval_lua_script(CAS_TOP_SCRIPT, CAS_TOP_SCRIPT_SHA1, [db_conns_pq_key], [])
+            rescue
+                @least ||= local_least
+            end
+
+            def local_least(action = :extract)
+                pq_mutex.synchronize do
+                    case action
+                    when :extract
+                        x, count = @@leasts[db_conns_pq_key].pop
+                        @@leasts[db_conns_pq_key].push([x, count + 1])
+                        x
+                    when :decrease
+                        @@leasts[db_conns_pq_key].update(@least, -1)
+                    end
+                end
             end
 
             def decrease
                 unless @redis.nil?
                     @redis.zincrby(db_conns_pq_key, -1, least)
                 else
-                    @@leasts[db_conns_pq_key].update(least, -1)
+                    local_least(:decrease)
                 end
             end
     end
