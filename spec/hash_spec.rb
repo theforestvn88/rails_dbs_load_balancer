@@ -15,8 +15,13 @@ RSpec.describe "hash algorithm" do
             end
             expect(db).to eq(:reading2)
 
-            url = "thisisaaaaaalongongongogngonggongognogngongogngongongongogngongongognognogngongongogngoogosngksdfkshdfshdfkshdfkjshdfjkhsdfkjdhsfkjdfshkj/api/books/156"
+            url = "/api/books/156"
             Developer.connected_through_load_balancer(:hash, source: url) do
+                Developer.all
+            end
+            expect(db).to eq(:reading6)
+
+            Developer.connected_through_load_balancer(:hash, hash_func: lambda { |str| 2 }, source: url) do
                 Developer.all
             end
             expect(db).to eq(:reading3)

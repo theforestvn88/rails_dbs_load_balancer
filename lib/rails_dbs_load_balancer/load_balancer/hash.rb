@@ -11,7 +11,7 @@ module LoadBalancer
         def hash_to_index(**options)
             rand(0...@database_configs.size) if options[:source].nil?
 
-            h = hashcode(options[:source])
+            h = options[:hash_func]&.respond_to?(:call) ? options[:hash_func].call(options[:source]) : hashcode(options[:source])
             h % @database_configs.size
         end
 
