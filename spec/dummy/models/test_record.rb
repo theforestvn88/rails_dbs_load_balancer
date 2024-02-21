@@ -93,4 +93,19 @@ class TestRecord < ActiveRecord::Base
       {role: :reading6},
     ],
     algorithm: :randomized
+
+  load_balancing :lrt, [
+      {role: :reading1}, 
+      {role: :reading2},
+      {role: :reading3},
+    ],
+    algorithm: :least_response_time,
+    redis: Redis.new(host: 'localhost')
+
+  load_balancing :lrt_local, [
+      {role: :reading1}, 
+      {role: :reading2},
+      {role: :reading3},
+    ],
+    algorithm: :least_response_time
 end

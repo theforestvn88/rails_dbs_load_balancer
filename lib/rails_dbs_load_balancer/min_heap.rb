@@ -1,5 +1,5 @@
 class MinHeap
-    def initialize(comparator = lambda { |x, y| x.last <=> y.last })
+    def initialize(comparator = lambda { |x, y| x <=> y })
         @comparator = comparator
         @items = []
     end
@@ -18,16 +18,31 @@ class MinHeap
         @items[0]
     end
 
-    def update(index, delta)
-        if item_index = @items.find_index { |item| item.first == index }
-            @items[item_index][1] += delta
+    def update(item, val)
+        return unless item
             
-            if delta < 0
-                swim_up(item_index)
-            else
-                sink_down(item_index)
-            end
-        end
+        item[0] = val
+        swim_up(item[1])
+        sink_down(item[1])
+    end
+
+    def decrease(index, delta)
+        item = find_item(index)
+        update(item, item[0] - delta)
+    end
+
+    def increase(index, delta)
+        item = find_item(index)
+        update(item, item[0] + delta)
+    end
+
+    def replace(index, val)
+        item = find_item(index)
+        update(item, val)
+    end
+
+    def find_item(index)
+        @items.find { |item| item.last == index }
     end
 
     def empty?
@@ -54,6 +69,7 @@ class MinHeap
 
         def sink_down(i)
             return if (li = left(i)) >= @items.size
+
             ri = li + 1
             swap_i = (li == @items.size-1 || @comparator.call(@items[li], @items[ri]) <= 0) ? li : ri
             if (@comparator.call(@items[swap_i], @items[i]) <= 0)

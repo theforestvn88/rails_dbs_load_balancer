@@ -7,6 +7,7 @@ require_relative "./load_balancer/least_connection"
 require_relative "./load_balancer/weight_round_robin"
 require_relative "./load_balancer/hash"
 require_relative "./load_balancer/randomized"
+require_relative "./load_balancer/least_response_time"
 
 module LoadBalancer
     extend ::ActiveSupport::Concern
