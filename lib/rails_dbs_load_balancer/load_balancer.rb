@@ -14,20 +14,25 @@ module LoadBalancer
 
     mattr_reader :lb, default: {}
 
+    def init(name, db_configs, algorithm: :round_robin, redis: nil)
+        lb_algo_clazz = "LoadBalancer::#{algorithm.to_s.classify}".constantize
+        LoadBalancer.lb[name] = {
+            clazz: lb_algo_clazz,
+            db_configs: db_configs,
+            redis: redis,
+            key: name
+        }
+
+        DistributeLock.new(redis).synchronize(name) do
+            lb = lb_algo_clazz.new(db_configs, redis: redis, key: name)
+            lb.warm_up
+        end
+    end
+    module_function :init
+
     module ClassMethods
         def load_balancing(name, db_configs, algorithm: :round_robin, redis: nil)
-            lb_algo_clazz = "LoadBalancer::#{algorithm.to_s.classify}".constantize
-            LoadBalancer.lb[name] = {
-                clazz: lb_algo_clazz,
-                db_configs: db_configs,
-                redis: redis,
-                key: name
-            }
-
-            DistributeLock.new(redis).synchronize(name) do
-                lb = lb_algo_clazz.new(db_configs, redis: redis, key: name)
-                lb.warm_up
-            end
+            LoadBalancer.init(name, db_configs, algorithm: algorithm, redis: redis)
         end
 
         def connected_through_load_balancer(name, **options, &blk)

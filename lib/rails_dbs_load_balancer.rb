@@ -5,5 +5,9 @@ require_relative "rails_dbs_load_balancer/load_balancer"
 
 module RailsDbsLoadBalancer
   class Error < StandardError; end
-  # Your code goes here...
+
+  def setup
+    yield(LoadBalancer)
+  end
+  module_function :setup
 end
