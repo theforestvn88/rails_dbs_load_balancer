@@ -3,7 +3,12 @@ require_relative "./algo"
 module LoadBalancer
     class Hash < Algo
         def next_db(**options)
-            @database_configs[hash_to_index(**options)]
+            db_index = hash_to_index(**options)
+            return @database_configs[db_index], db_index if available?(db_index)
+            
+            # fail over
+            next_dbs = (db_index+1...db_index+@database_configs.size).map { |i| i % @database_configs.size }
+            fail_over(next_dbs)
         end
 
         private

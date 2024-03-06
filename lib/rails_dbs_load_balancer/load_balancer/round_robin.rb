@@ -5,9 +5,14 @@ module LoadBalancer
         cattr_accessor :currents
         
         def next_db(**options)
-            @database_configs[cas_current]
+            @current = cas_current
+            return @database_configs[@current], @current if available?(@current)
+            
+            # fail over
+            next_dbs = (@current+1...@current+@database_configs.size).map { |i| i % @database_configs.size }
+            fail_over(next_dbs)
         end
-        
+
         private
 
             CAS_NEXT_SCRIPT = <<~LUA
@@ -24,12 +29,12 @@ module LoadBalancer
             CAS_NEXT_SCRIPT_SHA1 = ::Digest::SHA1.hexdigest CAS_NEXT_SCRIPT
 
             def current_cached_key
-                "#{@key}:current"
+                "#{@key}:rr:current"
             end
 
             def cas_current
                 return local_current if @redis.nil?
-                @current = eval_lua_script(CAS_NEXT_SCRIPT, CAS_NEXT_SCRIPT_SHA1, [current_cached_key], [@database_configs.size])
+                eval_lua_script(CAS_NEXT_SCRIPT, CAS_NEXT_SCRIPT_SHA1, [current_cached_key], [@database_configs.size])
             rescue
                 # in case of redis failed
                 # round-robin local server current

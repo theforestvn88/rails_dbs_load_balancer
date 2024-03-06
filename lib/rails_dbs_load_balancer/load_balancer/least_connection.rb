@@ -27,22 +27,29 @@ module LoadBalancer
         end
 
         def next_db(**options)
-            @database_configs[least.to_i]
+            @least_db_index = top_least
+            return @database_configs[@least_db_index], @least_db_index if available?(@least_db_index)
+            
+            # fail over
+            fail_over(next_dbs)
         end
 
-        def connected_to_next_db(**options)
-            super
+        def after_connected
+            increase
+        end
+
+        def after_executed
             decrease
         end
 
         private
             
-            CAS_TOP_SCRIPT = <<~LUA
-                local top = unpack(redis.call("zrange", KEYS[1], 0, 0))
-                redis.call("zincrby", KEYS[1], 1, top)
-                return top
-            LUA
-            CAS_TOP_SCRIPT_SHA1 = ::Digest::SHA1.hexdigest CAS_TOP_SCRIPT
+            # CAS_TOP_SCRIPT = <<~LUA
+            #     local top = unpack(redis.call("zrange", KEYS[1], 0, 0))
+            #     redis.call("zincrby", KEYS[1], 1, top)
+            #     return top
+            # LUA
+            # CAS_TOP_SCRIPT_SHA1 = ::Digest::SHA1.hexdigest CAS_TOP_SCRIPT
 
             def db_conns_pq_key
                 "#{@key}:lc:pq"
@@ -52,31 +59,47 @@ module LoadBalancer
                 @@mutexes[db_conns_pq_key] ||= Mutex.new
             end
 
-            def least
-                @least ||= eval_lua_script(CAS_TOP_SCRIPT, CAS_TOP_SCRIPT_SHA1, [db_conns_pq_key], [])
+            def top_least
+                # eval_lua_script(CAS_TOP_SCRIPT, CAS_TOP_SCRIPT_SHA1, [db_conns_pq_key], [])
+                @redis.zrange(db_conns_pq_key, 0, 0).first.to_i
             rescue
-                @least ||= local_least
+                local_least(:extract)
             end
 
             def local_least(action = :extract)
                 pq_mutex.synchronize do
                     case action
                     when :extract
-                        count, x = @@leasts[db_conns_pq_key].pop
-                        @@leasts[db_conns_pq_key].push([count + 1, x])
+                        count, x = @@leasts[db_conns_pq_key].peak
                         x
                     when :decrease
-                        @@leasts[db_conns_pq_key].decrease(@least, 1)
+                        @@leasts[db_conns_pq_key].decrease(@least_db_index, 1) if @least_db_index
+                    when :increase
+                        @@leasts[db_conns_pq_key].increase(@least_db_index, 1) if @least_db_index
                     end
                 end
             end
 
             def decrease
-                unless @redis.nil?
-                    @redis.zincrby(db_conns_pq_key, -1, least)
-                else
-                    local_least(:decrease)
-                end
+                return unless @least_db_index
+
+                @redis.zincrby(db_conns_pq_key, -1, @least_db_index)
+            rescue
+                local_least(:decrease)
+            end
+
+            def increase
+                return unless @least_db_index
+
+                @redis.zincrby(db_conns_pq_key, 1, @least_db_index)
+            rescue
+                local_least(:increase)
+            end
+
+            def next_dbs
+                @redis.zrange(db_conns_pq_key, 0, -1).map(&:to_i)
+            rescue
+                @@leasts[db_conns_pq_key].order
             end
     end
 end

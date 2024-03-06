@@ -1,6 +1,8 @@
 require "active_support"
 require 'digest'
 require_relative "./redis_lua"
+require_relative "./healthcheck"
+require_relative "./errors"
 require_relative "./distribute_lock"
 require_relative "./load_balancer/round_robin"
 require_relative "./load_balancer/least_connection"

@@ -19,7 +19,12 @@ module LoadBalancer
         end
 
         def next_db(**options)
-            @database_configs[pick_weight]
+            db_index = pick_db_by_random_weight
+            return @database_configs[db_index], db_index if available?(db_index)
+            
+            # fail over
+            next_dbs = (db_index+1...db_index+@database_configs.size).map { |i| i % @database_configs.size }
+            fail_over(next_dbs)
         end
 
         private
@@ -36,7 +41,7 @@ module LoadBalancer
             rand(@@weight_sums[weight_sum_key]-1)
         end
 
-        def pick_weight
+        def pick_db_by_random_weight
             rw = random_weight
             @@cum_weights[weights_key].find_index do |weight|
                 weight > rw

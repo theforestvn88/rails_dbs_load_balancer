@@ -27,13 +27,19 @@ module LoadBalancer
         end
 
         def next_db(**options)
-            @database_configs[least.to_i]
+            @least_db_index = top_least.to_i
+            return @database_configs[@least_db_index], @least_db_index if available?(@least_db_index)
+            
+            # fail over
+            fail_over(next_dbs)
         end
 
-        def connected_to_next_db(**options)
+        def after_connected
             @start_time = Time.now
-            super
-            update_response_time(Time.now - @start_time)
+        end
+
+        def after_executed
+            update_response_time(Time.now - @start_time) if @start_time
         end
 
         private
@@ -53,31 +59,34 @@ module LoadBalancer
                 @@mutexes[db_conns_pq_key] ||= Mutex.new
             end
 
-            def least
-                @least ||= eval_lua_script(CAS_TOP_SCRIPT, CAS_TOP_SCRIPT_SHA1, [db_conns_pq_key], [])
+            def top_least
+                eval_lua_script(CAS_TOP_SCRIPT, CAS_TOP_SCRIPT_SHA1, [db_conns_pq_key], [])
             rescue
-                @least ||= local_least
+                local_least
             end
 
             def local_least(action = :extract, **options)
                 pq_mutex.synchronize do
                     case action
                     when :extract
-                        t, x = @@response_times[db_conns_pq_key].pop
-                        @@response_times[db_conns_pq_key].push([t + 0.1, x])
+                        t, x = @@response_times[db_conns_pq_key].peak
                         x
                     when :update_response_time
-                        @@response_times[db_conns_pq_key].replace(@least, options[:time])
+                        @@response_times[db_conns_pq_key].replace(@least_db_index, options[:time])
                     end
                 end
             end
 
             def update_response_time(t)
-                unless @redis.nil?
-                    @redis.zadd(db_conns_pq_key, t, least)
-                else
-                    local_least(:update_response_time, time: t)
-                end
+                @redis.zadd(db_conns_pq_key, t, @least_db_index)
+            rescue
+                local_least(:update_response_time, time: t)
+            end
+
+            def next_dbs
+                @redis.zrange(db_conns_pq_key, 0, -1).map(&:to_i)
+            rescue
+                @@response_times[db_conns_pq_key].order
             end
     end
 end

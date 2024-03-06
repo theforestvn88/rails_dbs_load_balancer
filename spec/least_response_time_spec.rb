@@ -112,4 +112,48 @@ RSpec.describe "least-response-time algorithm" do
             end
         end
     end
+
+    context "one database failed" do
+        before do
+            LoadBalancer::LeastResponseTime.class_variable_set(:@@down_times, {})
+
+            @redis = Redis.new(host: "localhost")
+            @redis.zincrby("lrt:lrt:pq", 1, 0)
+            @redis.zincrby("lrt:lrt:pq", 3, 1)
+            @redis.zincrby("lrt:lrt:pq", 2, 2)
+
+            @least_response_role = nil
+            allow(ActiveRecord::Base).to receive(:connected_to) do |role:, **configs|
+                if role == :reading1
+                    raise ActiveRecord::AdapterError
+                else
+                    @least_response_role = role
+                end
+            end.and_yield
+        end
+
+        it "should try the next least connect db" do
+            Developer.connected_through_load_balancer(:lrt) do
+                Developer.all
+            end
+    
+            expect(@least_response_role).to eq(:reading3)
+        end
+
+        it "should ignore the failed db in an interval time" do
+            Developer.connected_through_load_balancer(:lrt) do
+                Developer.all
+            end
+
+            allow(ActiveRecord::Base).to receive(:connected_to) do |role:, **configs|
+                @least_response_role = role
+            end.and_yield
+
+            Developer.connected_through_load_balancer(:lrt) do
+                Developer.all
+            end
+
+            expect(@least_response_role).to eq(:reading3)
+        end
+    end
 end

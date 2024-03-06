@@ -34,4 +34,48 @@ RSpec.describe "weight round robin algorithm" do
             expect(db).to eq(:reading6)
         end
     end
+
+    context "one database failed" do
+        before do
+            LoadBalancer::WeightRoundRobin.class_variable_set(:@@down_times, {})
+
+            @counter = Hash.new(0)
+            allow(ActiveRecord::Base).to receive(:connected_to) do |role:, **configs|
+                if role == :reading1
+                    raise ActiveRecord::AdapterError
+                else
+                    @counter[role] += 1
+                end
+            end
+        end
+
+        it "should try the next db" do
+            allow_any_instance_of(Object).to receive(:rand).and_return(5)
+            Developer.connected_through_load_balancer(:wrr) do
+                Developer.all
+            end
+
+            expect(@counter).to eq({reading2: 1})
+        end
+
+        it "should ignore the failed db in an interval time" do
+            allow_any_instance_of(Object).to receive(:rand).and_return(5)
+
+            Developer.connected_through_load_balancer(:wrr) do
+                Developer.all
+            end
+
+            # back to normal
+            allow(ActiveRecord::Base).to receive(:connected_to) do |role:, **configs|
+                @counter[role] += 1
+            end
+
+            Developer.connected_through_load_balancer(:wrr) do
+                Developer.all
+            end
+
+            # still ignore the failed db :reading1
+            expect(@counter).to eq({reading2: 2})
+        end
+    end
 end
