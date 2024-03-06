@@ -18,35 +18,45 @@ class MinHeap
         @items[0]
     end
 
-    def update(item, val)
-        return unless item
-            
-        item[0] = val
-        swim_up(item[1])
-        sink_down(item[1])
+    def update(item_index)
+        return if item_index < 0 || item_index >= @items.size
+
+        swim_up(item_index)
+        sink_down(item_index)
     end
 
     def decrease(index, delta)
-        item = find_item(index)
-        update(item, item[0] - delta)
+        item_index = find_item_index(index)
+        @items[item_index][0] -= delta
+        update(item_index)
     end
 
     def increase(index, delta)
-        item = find_item(index)
-        update(item, item[0] + delta)
+        item_index = find_item_index(index)
+        @items[item_index][0] += delta
+        update(item_index)
     end
 
     def replace(index, val)
-        item = find_item(index)
-        update(item, val)
+        item_index = find_item_index(index)
+        @items[item_index][0] = val
+        update(item_index)
     end
 
-    def find_item(index)
-        @items.find { |item| item.last == index }
+    # def find_item(index)
+    #     @items.find { |item| item.last == index }
+    # end
+
+    def find_item_index(index)
+        @items.find_index { |item| item.last == index }
     end
 
     def empty?
         @items.empty?
+    end
+
+    def order
+        @items.sort.map(&:last)
     end
 
     private
