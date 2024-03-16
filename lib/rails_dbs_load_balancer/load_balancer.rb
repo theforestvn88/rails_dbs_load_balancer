@@ -44,5 +44,7 @@ module LoadBalancer
             lb = configs[:clazz].new(configs[:db_configs], redis: configs[:redis], key: configs[:key])
             lb.connected_to_next_db(**options, &blk)
         end
+        alias_method :connected_through, :connected_through_load_balancer
+        alias_method :connected_by, :connected_through_load_balancer
     end
 end

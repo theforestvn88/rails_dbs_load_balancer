@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 require_relative "./dummy/models/developer"
+require_relative "./shared_examples"
 
 RSpec.describe "least-response-time algorithm" do
     describe "warm-up setup a connections priority queue" do
@@ -125,7 +126,7 @@ RSpec.describe "least-response-time algorithm" do
             @least_response_role = nil
             allow(ActiveRecord::Base).to receive(:connected_to) do |role:, **configs|
                 if role == :reading1
-                    raise ActiveRecord::AdapterError
+                    raise ActiveRecord::ConnectionNotEstablished
                 else
                     @least_response_role = role
                 end
@@ -156,4 +157,6 @@ RSpec.describe "least-response-time algorithm" do
             expect(@least_response_role).to eq(:reading3)
         end
     end
+
+    it_behaves_like "when all databases have down", lb: :lrt
 end

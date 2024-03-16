@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 require_relative "./dummy/models/developer"
+require_relative "./shared_examples"
 
 RSpec.describe "weight round robin algorithm" do
     describe "Not dependent on redis" do
@@ -42,7 +43,7 @@ RSpec.describe "weight round robin algorithm" do
             @counter = Hash.new(0)
             allow(ActiveRecord::Base).to receive(:connected_to) do |role:, **configs|
                 if role == :reading1
-                    raise ActiveRecord::AdapterError
+                    raise ActiveRecord::ConnectionNotEstablished
                 else
                     @counter[role] += 1
                 end
@@ -78,4 +79,6 @@ RSpec.describe "weight round robin algorithm" do
             expect(@counter).to eq({reading2: 2})
         end
     end
+
+    it_behaves_like "when all databases have down", lb: :wrr
 end

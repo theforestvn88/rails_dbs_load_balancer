@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 require_relative "./dummy/models/developer"
+require_relative "./shared_examples"
 
 RSpec.describe "randomized algorithm" do
     describe "Not dependent on redis" do
@@ -22,7 +23,7 @@ RSpec.describe "randomized algorithm" do
             @counter = Hash.new(0)
             allow(ActiveRecord::Base).to receive(:connected_to) do |role:, **configs|
                 if role == :reading1
-                    raise ActiveRecord::AdapterError
+                    raise ActiveRecord::ConnectionNotEstablished
                 else
                     @counter[role] += 1
                 end
@@ -59,4 +60,6 @@ RSpec.describe "randomized algorithm" do
             expect(@counter.has_key?(:reading1)).to be(false)
         end
     end
+
+    it_behaves_like "when all databases have down", lb: :randomized
 end

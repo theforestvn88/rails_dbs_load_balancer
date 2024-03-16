@@ -25,13 +25,13 @@ module LoadBalancer
 
         def connected_to_next_db(**options, &blk)
             candidate_db, db_index = next_db(**options)
-            raise LoadBalancer::NotFoundDbError if candidate_db.nil?
+            raise LoadBalancer::AllDatabasesHaveDown if candidate_db.nil?
 
             ::ActiveRecord::Base.connected_to(**candidate_db) do
                 after_connected
                 blk.call
             end
-        rescue ActiveRecord::AdapterError
+        rescue ActiveRecord::ConnectionNotEstablished
             mark_failed(db_index)
             @should_retry = true
         ensure

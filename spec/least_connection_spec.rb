@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 require_relative "./dummy/models/developer"
+require_relative "./shared_examples"
 
 RSpec.describe "least-connection algorithm" do
     before do
@@ -54,7 +55,7 @@ RSpec.describe "least-connection algorithm" do
             @least_role = nil
             allow(ActiveRecord::Base).to receive(:connected_to) do |role:, **configs|
                 if role == :reading1
-                    raise ActiveRecord::AdapterError
+                    raise ActiveRecord::ConnectionNotEstablished
                 else
                     @least_role = role
                 end
@@ -85,6 +86,8 @@ RSpec.describe "least-connection algorithm" do
             expect(@least_role).to eq(:reading3)
         end
     end
+
+    it_behaves_like "when all databases have down", lb: :lc
 
     context "redis nil or redis failed" do
         before do

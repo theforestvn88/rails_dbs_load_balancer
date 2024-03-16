@@ -1,3 +1,3 @@
 module LoadBalancer
-    class NotFoundDbError < StandardError; end
+    class AllDatabasesHaveDown < StandardError; end
 end
