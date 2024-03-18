@@ -5,13 +5,13 @@ ENV["RAILS_ENV"] = "test"
 
 config = {
   "test" => {
-    "primary"  => { "adapter" => "sqlite3", "database" => "spec/dummy/db/primary.sqlite3" },
-    "primary_replica1"  => { "adapter" => "sqlite3", "database" => "spec/dummy/db/primary_replica1.sqlite3", "replica" => true },
-    "primary_replica2"  => { "adapter" => "sqlite3", "database" => "spec/dummy/db/primary_replica2.sqlite3", "replica" => true },
-    "primary_replica3"  => { "adapter" => "sqlite3", "database" => "spec/dummy/db/primary_replica3.sqlite3", "replica" => true },
-    "primary_replica4"  => { "adapter" => "sqlite3", "database" => "spec/dummy/db/primary_replica4.sqlite3", "replica" => true },
-    "primary_replica5"  => { "adapter" => "sqlite3", "database" => "spec/dummy/db/primary_replica5.sqlite3", "replica" => true },
-    "primary_replica6"  => { "adapter" => "sqlite3", "database" => "spec/dummy/db/primary_replica6.sqlite3", "replica" => true },
+    "primary"  => { "adapter" => "sqlite3", "database" => "spec/dummy/db/primary.sqlite3", "pool" => 5 },
+    "primary_replica1"  => { "adapter" => "sqlite3", "database" => "spec/dummy/db/primary_replica1.sqlite3", "replica" => true, "pool" => 5, "checkout_timeout" => 100 },
+    "primary_replica2"  => { "adapter" => "sqlite3", "database" => "spec/dummy/db/primary_replica2.sqlite3", "replica" => true, "pool" => 5, "checkout_timeout" => 100 },
+    "primary_replica3"  => { "adapter" => "sqlite3", "database" => "spec/dummy/db/primary_replica3.sqlite3", "replica" => true, "pool" => 5, "checkout_timeout" => 100 },
+    "primary_replica4"  => { "adapter" => "sqlite3", "database" => "spec/dummy/db/primary_replica4.sqlite3", "replica" => true, "pool" => 5, "checkout_timeout" => 100 },
+    "primary_replica5"  => { "adapter" => "sqlite3", "database" => "spec/dummy/db/primary_replica5.sqlite3", "replica" => true, "pool" => 5, "checkout_timeout" => 100 },
+    "primary_replica6"  => { "adapter" => "sqlite3", "database" => "spec/dummy/db/primary_replica6.sqlite3", "replica" => true, "pool" => 5, "checkout_timeout" => 100 },
   }
 }
 
@@ -33,6 +33,16 @@ class TestRecord < ActiveRecord::Base
   include LoadBalancer
 
   load_balancing :rr, [
+      {role: :reading1}, 
+      {role: :reading2},
+      {role: :reading3},
+      {role: :reading4},
+      {role: :reading5},
+      {role: :reading6},
+    ],
+    redis: Redis.new(host: 'localhost')
+  
+  load_balancing :rr2, [
       {role: :reading1}, 
       {role: :reading2},
       {role: :reading3},
