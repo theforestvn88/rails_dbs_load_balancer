@@ -73,6 +73,7 @@ RSpec.describe "round robin algorithm" do
 
     context "one database down" do
         before do
+            @redis.set("rr2:rr:current", 5)
             @counter = Hash.new(0)
             allow(ActiveRecord::Base).to receive(:connected_to) do |role:, **configs|
                 if role == :reading1
@@ -84,7 +85,7 @@ RSpec.describe "round robin algorithm" do
         end
 
         it "should try the next db" do
-            Developer.connected_through_load_balancer(:rr) do
+            Developer.connected_through_load_balancer(:rr2) do
                 Developer.all
             end
 
@@ -92,18 +93,18 @@ RSpec.describe "round robin algorithm" do
         end
 
         it "should ignore the failed db in an interval time" do
-            Developer.connected_through_load_balancer(:rr) do
+            Developer.connected_through_load_balancer(:rr2) do
                 Developer.all
             end
 
             # back to normal
-            @redis.set("rr:rr:current", 0)
+            @redis.set("rr2:rr:current", 0)
             allow(ActiveRecord::Base).to receive(:connected_to) do |role:, **configs|
                 @counter[role] += 1
             end
 
             6.times do
-                Developer.connected_through_load_balancer(:rr) do
+                Developer.connected_through_load_balancer(:rr2) do
                     Developer.all
                 end
             end

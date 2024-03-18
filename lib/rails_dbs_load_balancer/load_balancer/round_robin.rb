@@ -12,7 +12,6 @@ module LoadBalancer
             @current = cas_current
             return @database_configs[@current], @current if db_available?(@current)
             
-            # fail over
             next_dbs = (@current+1...@current+@database_configs.size).map { |i| i % @database_configs.size }
             fail_over(next_dbs)
         end
@@ -42,8 +41,8 @@ module LoadBalancer
             rescue => error
                 # in case of redis failed
                 mark_redis_down if error.is_a?(Redis::CannotConnectError)
-                # local server current
-                local_current
+                # random local server current
+                @@currents[current_cached_key] = rand(0...@database_configs.size)
             end
 
             def local_current

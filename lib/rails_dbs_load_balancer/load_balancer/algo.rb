@@ -27,7 +27,7 @@ module LoadBalancer
             candidate_db, db_index = next_db(**options)
             raise LoadBalancer::AllDatabasesHaveDown if candidate_db.nil?
 
-            ::ActiveRecord::Base.connected_to(**candidate_db) do
+            ::ActiveRecord::Base.connected_to(**candidate_db.slice(:shard, :role)) do
                 after_connected
                 blk.call
             end
