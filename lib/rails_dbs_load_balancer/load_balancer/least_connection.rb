@@ -28,7 +28,7 @@ module LoadBalancer
 
         def next_db(**options)
             @least_db_index = top_least
-            return @database_configs[@least_db_index], @least_db_index if available?(@least_db_index)
+            return @database_configs[@least_db_index], @least_db_index if db_available?(@least_db_index)
             
             # fail over
             fail_over(next_dbs)
@@ -60,9 +60,11 @@ module LoadBalancer
             end
 
             def top_least
+                return local_least(:extract) unless redis_available?
                 # eval_lua_script(CAS_TOP_SCRIPT, CAS_TOP_SCRIPT_SHA1, [db_conns_pq_key], [])
                 @redis.zrange(db_conns_pq_key, 0, 0).first.to_i
-            rescue
+            rescue => error
+                mark_redis_down if error.is_a?(Redis::CannotConnectError)
                 local_least(:extract)
             end
 
@@ -82,23 +84,30 @@ module LoadBalancer
 
             def decrease
                 return unless @least_db_index
+                return local_least(:decrease) unless redis_available?
 
                 @redis.zincrby(db_conns_pq_key, -1, @least_db_index)
-            rescue
+            rescue => error
+                mark_redis_down if error.is_a?(Redis::CannotConnectError)
                 local_least(:decrease)
             end
 
             def increase
                 return unless @least_db_index
+                return local_least(:increase) unless redis_available?
 
                 @redis.zincrby(db_conns_pq_key, 1, @least_db_index)
-            rescue
+            rescue => error
+                mark_redis_down if error.is_a?(Redis::CannotConnectError)
                 local_least(:increase)
             end
 
             def next_dbs
+                return @@leasts[db_conns_pq_key].order unless redis_available?
+                
                 @redis.zrange(db_conns_pq_key, 0, -1).map(&:to_i)
-            rescue
+            rescue => error
+                mark_redis_down if error.is_a?(Redis::CannotConnectError)
                 @@leasts[db_conns_pq_key].order
             end
     end

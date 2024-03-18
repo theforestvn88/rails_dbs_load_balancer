@@ -7,7 +7,7 @@ RSpec.describe "least-connection algorithm" do
         @redis = Redis.new(host: "localhost")
         @redis.del("lc:lock")
         @redis.del("lc:lc:pq")
-        LoadBalancer::LeastConnection.class_variable_set(:@@down_times, {})
+        LoadBalancer::LeastConnection.class_variable_set(:@@db_down_times, {})
     end
 
     it "warm-up setup a connections redis priority queue" do

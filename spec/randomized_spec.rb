@@ -28,7 +28,7 @@ RSpec.describe "randomized algorithm" do
                     @counter[role] += 1
                 end
             end
-            LoadBalancer::Randomized.class_variable_set(:@@down_times, {})
+            LoadBalancer::Randomized.class_variable_set(:@@db_down_times, {})
         end
 
         it "should try the next db" do

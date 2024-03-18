@@ -38,7 +38,7 @@ RSpec.describe "weight round robin algorithm" do
 
     context "one database failed" do
         before do
-            LoadBalancer::WeightRoundRobin.class_variable_set(:@@down_times, {})
+            LoadBalancer::WeightRoundRobin.class_variable_set(:@@db_down_times, {})
 
             @counter = Hash.new(0)
             allow(ActiveRecord::Base).to receive(:connected_to) do |role:, **configs|

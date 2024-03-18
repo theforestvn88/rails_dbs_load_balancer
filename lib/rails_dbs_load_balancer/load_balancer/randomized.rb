@@ -4,7 +4,7 @@ module LoadBalancer
     class Randomized < Algo
         def next_db(**options)
             r = random_index
-            return @database_configs[r], r if available?(r)
+            return @database_configs[r], r if db_available?(r)
 
             next_dbs = (r+1...r+@database_configs.size).map { |i| i % @database_configs.size }
             fail_over(next_dbs)

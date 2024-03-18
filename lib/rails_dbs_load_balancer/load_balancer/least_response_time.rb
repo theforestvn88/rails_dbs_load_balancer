@@ -13,8 +13,8 @@ module LoadBalancer
                             @redis.zincrby(db_conns_pq_key, 0, i)
                         end
                     end
-                rescue => e
-                    # p e
+                rescue => error
+                    mark_redis_down if error.is_a?(Redis::CannotConnectError)
                 ensure
                     return if @@response_times.has_key?(db_conns_pq_key)
 
@@ -28,7 +28,7 @@ module LoadBalancer
 
         def next_db(**options)
             @least_db_index = top_least.to_i
-            return @database_configs[@least_db_index], @least_db_index if available?(@least_db_index)
+            return @database_configs[@least_db_index], @least_db_index if db_available?(@least_db_index)
             
             # fail over
             fail_over(next_dbs)
@@ -60,8 +60,11 @@ module LoadBalancer
             end
 
             def top_least
+                return local_least unless redis_available?
+
                 eval_lua_script(CAS_TOP_SCRIPT, CAS_TOP_SCRIPT_SHA1, [db_conns_pq_key], [])
-            rescue
+            rescue => error
+                mark_redis_down if error.is_a?(Redis::CannotConnectError)
                 local_least
             end
 
@@ -72,20 +75,26 @@ module LoadBalancer
                         t, x = @@response_times[db_conns_pq_key].peak
                         x
                     when :update_response_time
-                        @@response_times[db_conns_pq_key].replace(@least_db_index, options[:time])
+                        @@response_times[db_conns_pq_key].replace(@least_db_index, options[:time]) if @least_db_index
                     end
                 end
             end
 
             def update_response_time(t)
+                return local_least(:update_response_time, time: t) unless redis_available?
+                
                 @redis.zadd(db_conns_pq_key, t, @least_db_index)
-            rescue
+            rescue => error
+                mark_redis_down if error.is_a?(Redis::CannotConnectError)
                 local_least(:update_response_time, time: t)
             end
 
             def next_dbs
+                return @@response_times[db_conns_pq_key].order unless redis_available?
+
                 @redis.zrange(db_conns_pq_key, 0, -1).map(&:to_i)
-            rescue
+            rescue => error
+                mark_redis_down if error.is_a?(Redis::CannotConnectError)
                 @@response_times[db_conns_pq_key].order
             end
     end

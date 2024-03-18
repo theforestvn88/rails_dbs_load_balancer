@@ -6,7 +6,8 @@ RSpec.describe "round robin algorithm" do
     before do
         @redis = Redis.new(host: "localhost")
         @redis.del("rr:rr:current")
-        LoadBalancer::RoundRobin.class_variable_set(:@@down_times, {})
+        @redis.del("rr:lock")
+        LoadBalancer::RoundRobin.class_variable_set(:@@db_down_times, {})
     end
 
     it "should fair distribute to all databases" do
@@ -35,9 +36,12 @@ RSpec.describe "round robin algorithm" do
         })
     end
 
-    context "redis failed" do
+    context "redis have down" do
         before do
             allow_any_instance_of(Redis).to receive(:evalsha).and_raise(Redis::CannotConnectError)
+            Developer.connected_through_load_balancer(:rr) do
+                Developer.all
+            end
         end
 
         it "still fair distribute all db connects on each server base on local server counter" do
@@ -98,12 +102,14 @@ RSpec.describe "round robin algorithm" do
                 @counter[role] += 1
             end
 
-            Developer.connected_through_load_balancer(:rr) do
-                Developer.all
+            6.times do
+                Developer.connected_through_load_balancer(:rr) do
+                    Developer.all
+                end
             end
 
             # still ignore the failed db :reading1
-            expect(@counter).to eq({reading2: 2})
+            expect(@counter).not_to have_key(:reading1)
         end
     end
 

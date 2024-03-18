@@ -4,9 +4,13 @@ module LoadBalancer
     class RoundRobin < Algo
         cattr_accessor :currents
         
+        def warm_up
+            @@currents ||= ::Hash.new(0)
+        end
+
         def next_db(**options)
             @current = cas_current
-            return @database_configs[@current], @current if available?(@current)
+            return @database_configs[@current], @current if db_available?(@current)
             
             # fail over
             next_dbs = (@current+1...@current+@database_configs.size).map { |i| i % @database_configs.size }
@@ -33,17 +37,17 @@ module LoadBalancer
             end
 
             def cas_current
-                return local_current if @redis.nil?
+                return local_current unless redis_available?
                 eval_lua_script(CAS_NEXT_SCRIPT, CAS_NEXT_SCRIPT_SHA1, [current_cached_key], [@database_configs.size])
-            rescue
+            rescue => error
                 # in case of redis failed
-                # round-robin local server current
+                mark_redis_down if error.is_a?(Redis::CannotConnectError)
+                # local server current
                 local_current
             end
 
             def local_current
-                @@currents ||= ::Hash.new(0)
-                @@currents[current_cached_key] = ((@@currents[current_cached_key] || 0) + 1) % @database_configs.size
+                @@currents[current_cached_key] = (@@currents[current_cached_key] + 1) % @database_configs.size
             end
     end
 end

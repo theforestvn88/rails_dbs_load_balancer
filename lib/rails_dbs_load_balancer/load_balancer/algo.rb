@@ -32,7 +32,7 @@ module LoadBalancer
                 blk.call
             end
         rescue ActiveRecord::ConnectionNotEstablished
-            mark_failed(db_index)
+            mark_db_down(db_index)
             @should_retry = true
         ensure
             after_executed
@@ -44,7 +44,7 @@ module LoadBalancer
 
         def fail_over(next_choices)
             candidate = next_choices.find do |i| 
-                available?(i) 
+                db_available?(i) 
             end
 
             if candidate

@@ -20,7 +20,7 @@ module LoadBalancer
 
         def next_db(**options)
             db_index = pick_db_by_random_weight
-            return @database_configs[db_index], db_index if available?(db_index)
+            return @database_configs[db_index], db_index if db_available?(db_index)
             
             # fail over
             next_dbs = (db_index+1...db_index+@database_configs.size).map { |i| i % @database_configs.size }

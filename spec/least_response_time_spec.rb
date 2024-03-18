@@ -116,7 +116,7 @@ RSpec.describe "least-response-time algorithm" do
 
     context "one database failed" do
         before do
-            LoadBalancer::LeastResponseTime.class_variable_set(:@@down_times, {})
+            LoadBalancer::LeastResponseTime.class_variable_set(:@@db_down_times, {})
 
             @redis = Redis.new(host: "localhost")
             @redis.zincrby("lrt:lrt:pq", 1, 0)

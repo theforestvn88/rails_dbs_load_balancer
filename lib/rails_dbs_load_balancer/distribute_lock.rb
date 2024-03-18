@@ -7,6 +7,8 @@ class DistributeLock
     end
 
     def synchronize(name, lock_time = 3600)
+        return yield if @redis.nil?
+        
         lock_name = "#{name}:lock"
         time_lock = eval_lua_script(LOCK_SCRIPT, LOCK_SCRIPT_SHA1, [lock_name], [lock_time])
         return if time_lock.nil?
