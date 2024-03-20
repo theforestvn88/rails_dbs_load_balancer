@@ -48,3 +48,8 @@ module LoadBalancer
         alias_method :connected_by, :connected_through_load_balancer
     end
 end
+
+ActiveSupport.on_load(:active_record) do
+    ActiveRecord::Base.send(:include, LoadBalancer)
+end
+  

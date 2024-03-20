@@ -30,8 +30,6 @@ class TestRecord < ActiveRecord::Base
     reading6: :primary_replica6,
   }
 
-  include LoadBalancer
-
   load_balancing :rr, [
       {role: :reading1}, 
       {role: :reading2},
