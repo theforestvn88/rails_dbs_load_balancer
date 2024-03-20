@@ -27,9 +27,16 @@ module LoadBalancer
             candidate_db, db_index = next_db(**options)
             raise LoadBalancer::AllDatabasesHaveDown if candidate_db.nil?
 
-            ::ActiveRecord::Base.connected_to(**candidate_db.slice(:shard, :role)) do
-                after_connected
-                blk.call
+            if options.has_key?(:bases)
+                ::ActiveRecord::Base.connected_to_many(*options[:bases], **candidate_db.slice(:shard, :role), prevent_writes: options[:prevent_writes]) do
+                    after_connected
+                    blk.call
+                end
+            else
+                ::ActiveRecord::Base.connected_to(**candidate_db.slice(:shard, :role), prevent_writes: options[:prevent_writes]) do
+                    after_connected
+                    blk.call
+                end
             end
         rescue ActiveRecord::ConnectionNotEstablished
             mark_db_down(db_index)
