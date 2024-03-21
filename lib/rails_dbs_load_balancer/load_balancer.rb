@@ -14,6 +14,8 @@ require_relative "./load_balancer/least_response_time"
 module LoadBalancer
     extend ::ActiveSupport::Concern
 
+    mattr_accessor :db_down_time, default: 120
+    mattr_accessor :redis_down_time, default: 120
     mattr_reader :lb, default: {}
 
     def init(name, db_configs, algorithm: :round_robin, redis: nil)
@@ -47,9 +49,5 @@ module LoadBalancer
         alias_method :connected_through, :connected_through_load_balancer
         alias_method :connected_by, :connected_through_load_balancer
     end
-end
-
-ActiveSupport.on_load(:active_record) do
-    ActiveRecord::Base.send(:include, LoadBalancer)
 end
   

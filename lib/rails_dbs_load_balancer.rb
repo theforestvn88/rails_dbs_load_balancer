@@ -11,3 +11,7 @@ module RailsDbsLoadBalancer
   end
   module_function :setup
 end
+
+ActiveSupport.on_load(:active_record) do
+  ActiveRecord::Base.send(:include, LoadBalancer)
+end
