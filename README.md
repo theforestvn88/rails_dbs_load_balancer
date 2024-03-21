@@ -18,6 +18,7 @@ Declaring load balancers
 # config/initializers/multi_dbs_load_balancer.rb
     load_balancer.db_down_time = 120
     load_balancer.redis_down_time = 120
+
     load_balancer.init :rr_load_balancer,
         [
             {role: :reading1}, 
@@ -25,6 +26,14 @@ Declaring load balancers
             {role: :reading3},
         ],
         algorithm: :round_robin,
+        redis: Redis.new(...)
+
+    load_balancer.init :us_lrt_load_balancer,
+        [
+            {shard: :us, role: :reading1}, 
+            {shard: :us, role: :reading2},
+        ],
+        algorithm: :least_response_time,
         redis: Redis.new(...)
 ```
 
@@ -86,7 +95,7 @@ Rails.application.config.app_middleware.use LoadBalancerMiddleware
     Whenever it could not connect to a database, it mark that database have down for `db_down_time` seconds and ignore it on the next round, 
     and try to connect to the next available database.
 
-    After `db_down_time` seconds, the load balancer will try to connect this database again.
+    After `db_down_time` seconds, this database will be assumed available again and the load balancer will not ignore it and try to connect again.
 
     Whenever the redis-server has down (or you dont setup redis), distribute load balancers will process offline on each server until redis come back.
 
