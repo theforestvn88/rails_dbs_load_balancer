@@ -77,6 +77,21 @@ Rails.application.config.app_middleware.use LoadBalancerMiddleware
 
 - Support algorithms: `round_robin`, `weight_round_robin`, `least_connection`, `least_response_time`, `hash`, `randomized`
 
+    + `hash` algorithm require you pass the `:source` parameter
+      ```ruby
+          @developers = Developer.connected_by(:hash_load_balancer, source: request.ip) { Developer.all }
+      ```
+
+    + `weight_round_robin` require setup `weight` for each replica database
+        ```ruby
+          load_balancing :wrr, [
+              {role: :reading1, weight: 5}, 
+              {role: :reading2, weight: 3},
+              {role: :reading3, weight: 2},
+            ],
+            algorithm: :weight_round_robin
+        ```
+    
 - Distribute
 
     If you launch multiple servers then you wish your load balancers will share states between servers,
