@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
-require_relative "rails_dbs_load_balancer/version"
-require_relative "rails_dbs_load_balancer/load_balancer"
+require_relative "multi_dbs_load_balancer/version"
+require_relative "multi_dbs_load_balancer/load_balancer"
 
-module RailsDbsLoadBalancer
+module MultiDbsLoadBalancer
   class Error < StandardError; end
 
   def setup

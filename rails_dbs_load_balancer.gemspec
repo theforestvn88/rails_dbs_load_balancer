@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
-require_relative "lib/rails_dbs_load_balancer/version"
+require_relative "lib/multi_dbs_load_balancer/version"
 
 Gem::Specification.new do |spec|
-  spec.name = "rails_dbs_load_balancer"
-  spec.version = RailsDbsLoadBalancer::VERSION
+  spec.name = "multi_dbs_load_balancer"
+  spec.version = MultiDbsLoadBalancer::VERSION
   spec.authors = ["theforestvn88"]
   spec.email = ["theforestvn88@gmail.com"]
 

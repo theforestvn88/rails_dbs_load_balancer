@@ -1,5 +1,5 @@
 require 'benchmark/ips'
-require_relative "./lib/rails_dbs_load_balancer"
+require_relative "./lib/multi_dbs_load_balancer"
 require_relative "./spec/dummy/models/developer"
 
 Benchmark.ips do |bm|

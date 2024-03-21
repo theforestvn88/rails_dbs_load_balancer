@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    rails_dbs_load_balancer (0.1.0)
+    multi_dbs_load_balancer (0.1.0)
       activerecord (>= 6.0)
       activesupport (>= 6.0)
 
@@ -75,7 +75,7 @@ PLATFORMS
 DEPENDENCIES
   activerecord
   activesupport
-  rails_dbs_load_balancer!
+  multi_dbs_load_balancer!
   rake (~> 13.0)
   redis
   rspec (~> 3.0)

@@ -2,7 +2,7 @@
 
 RSpec.describe "initializer" do
     it "init load balancer" do
-        RailsDbsLoadBalancer.setup do |load_balancer|
+        MultiDbsLoadBalancer.setup do |load_balancer|
             load_balancer.init :init_round_robin,
                 [
                     {role: :reading1}, 

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "rails_dbs_load_balancer"
+require "multi_dbs_load_balancer"
 
 RSpec.configure do |config|
   # Enable flags like --only-failures and --next-failure
